@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">FruitApp</string>
+    <string name="begin_img">Hình ảnh giới thiệu trái cây</string>
 </resources>
