@@ -13,13 +13,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fruitapp.R
-import com.example.fruitapp.ui.component.user.CardProduct
+import com.example.fruitapp.ui.cart.component.CardProduct
 import com.example.fruitapp.ui.component.user.Footer
 import com.example.fruitapp.ui.component.user.Header
 import com.example.fruitapp.ui.component.user.RecommendedProduct
 
 @Composable
-fun FavoriteProduct() {
+fun FavoriteProductScreen() {
     // 1. Dữ liệu mẫu sản phẩm yêu thích
     val favoriteProducts = listOf(
         FavoriteProductData("Táo Envy Mỹ", "55.000đ", "1kg", "Trái cây", 4.9, R.drawable.luu),
@@ -82,7 +82,7 @@ fun FavoriteProduct() {
                 // --- PHẦN 2: TIÊU ĐỀ GỢI Ý ---
                 item {
                     Text(
-                        text = "Có thể bạn cũng thích",
+                        text = "Sản phẩm gợi ý",
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,

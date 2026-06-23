@@ -1,4 +1,4 @@
-package com.example.fruitapp.ui.screen.user
+package com.example.fruitapp.ui.cart
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,15 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fruitapp.R
-import com.example.fruitapp.ui.component.user.CartCard
-import com.example.fruitapp.ui.component.user.Footer
+import com.example.fruitapp.ui.cart.component.CartCard
 import com.example.fruitapp.ui.component.user.Header
 
 @Composable
