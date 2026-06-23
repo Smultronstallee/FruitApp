@@ -1,4 +1,4 @@
-package com.example.fruitapp.ui.component.user
+package com.example.fruitapp.ui.cart.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

@@ -1,17 +1,14 @@
-package com.example.fruitapp.ui.screen.user
+package com.example.fruitapp.ui.auth
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -27,11 +24,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.fruitapp.R
+import com.example.fruitapp.ui.auth.viewmodel.AuthViewModel
+import com.example.fruitapp.ui.navigation.Route
 
 @Composable
-fun ForgotPasswordScreen() {
+fun ForgotPasswordScreen(
+    viewModel: AuthViewModel,
+    navController: NavController
+) {
     var email by remember { mutableStateOf("") }
+    var attempted by remember { mutableStateOf(false) }
+    var successMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(viewModel.isLoading, viewModel.errorMessage) {
+        if (attempted && !viewModel.isLoading && viewModel.errorMessage == null) {
+            successMessage = "Email đặt lại mật khẩu đã được gửi!"
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -82,11 +93,10 @@ fun ForgotPasswordScreen() {
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                // Ô nhập Email
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
+                    placeholder = { Text("Email", color = Color.Gray) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -95,47 +105,82 @@ fun ForgotPasswordScreen() {
                         unfocusedTextColor = Color.Black,
                         focusedContainerColor = Color.White,
                         unfocusedContainerColor = Color.White,
-                        focusedBorderColor = Color.White,
+                        focusedBorderColor = colorResource(id = R.color.blue),
                         unfocusedBorderColor = Color.Transparent,
-                        focusedLabelColor = colorResource(id = R.color.blue),
-                        unfocusedLabelColor = Color.Gray,
                         focusedLeadingIconColor = colorResource(id = R.color.blue),
                         unfocusedLeadingIconColor = Color.Gray
                     )
                 )
+
+                // Lỗi
+                viewModel.errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = Color.Red,
+                        fontSize = 13.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // Thành công
+                successMessage?.let {
+                    Text(
+                        text = it,
+                        color = Color.Green,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 Button(
-                    onClick = { /* Xử lý qmk */ },
+                    onClick = {
+                        attempted = true
+                        successMessage = null
+                        viewModel.clearErrorMessage()
+                        viewModel.forgotPassword(email)
+                    },
+                    enabled = !viewModel.isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 12.dp)
+                        .padding(top = 4.dp)
                         .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorResource(id = R.color.blue)
                     )
                 ) {
-                    Text(text = "Gửi email", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    if (viewModel.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
+                        )
+                    } else {
+                        Text(text = "Gửi email", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
 
-                //quay lại
-               Row(modifier = Modifier.clickable { /* Chuyển hướng sang Login */ }
-                   .padding(top = 18.dp)){
-                   Icon(
-                       imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                       contentDescription = "Quay lại",
-                       tint = Color.White,
-                       modifier = Modifier.size(18.dp)
-                   )
-                   Spacer(modifier = Modifier.width(4.dp))
-                   Text(
-                       text = "Quay lại",
-                       color = Color.White,
-                       fontSize = 14.sp,
-                       fontWeight = FontWeight.Bold
-                   )
-
-            }
+                Row(
+                    modifier = Modifier
+                        .clickable { navController.navigate(Route.LOGIN) }
+                        .padding(top = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Quay lại",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Quay lại",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
+    }
 }

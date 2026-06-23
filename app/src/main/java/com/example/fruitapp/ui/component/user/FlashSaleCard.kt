@@ -1,5 +1,7 @@
 package com.example.fruitapp.ui.component.user
 
+// Thêm các import cho Animation
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,14 +10,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue // Cần thiết để dùng 'by'
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer // Để dùng hiệu ứng động
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,50 +29,70 @@ import androidx.compose.ui.unit.sp
 import com.example.fruitapp.R
 
 @Composable
-fun ProductCard() {
+fun ProductCard(
+    modifier: Modifier = Modifier,
+    name: String = "Sản phẩm",
+    price: String = "0đ",
+    unit: String = "1kg",
+    discount: Int = 0,
+    soldPercent: Float = 0f,
+    imageRes: Int = R.drawable.begin_img
+) {
+    // TẠO ANIMATION CHO ICON
+    val infiniteTransition = rememberInfiniteTransition(label = "fire_pulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "fire_scale"
+    )
+
     Column(
-        modifier = Modifier
-            .width(180.dp)
-            .height(300.dp)
-            .padding(8.dp)
+        modifier = modifier
             .background(Color.White, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
     ) {
-        // 1. Hình ảnh chiếm 2/3
+        // 1. Hình ảnh
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(2f)
+                .height(130.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.begin_img), // Placeholder
+                painter = painterResource(id = imageRes),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
 
-            // Badge phần trăm giảm giá đè lên hình
-            Box(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .background(Color.Red, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                    .align(Alignment.TopStart)
-            ) {
-                Text(text = "-20%", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            if (discount > 0) {
+                Surface(
+                    color = Color.White,
+                    shape = RoundedCornerShape(bottomEnd = 10.dp)
+                ) {
+                    Text(
+                        text = "-$discount%",
+                        color = Color.Red,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
             }
         }
 
-        // 2. Nội dung chiếm 1/3
+        // 2. Nội dung
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1.2f)
                 .padding(8.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = "Tên sản phẩm Fruit",
+                text = name,
                 maxLines = 1,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
@@ -78,53 +104,66 @@ fun ProductCard() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "25.000đ", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(text = price, color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(text = "/$unit", color = Color.Gray, fontSize = 11.sp, modifier = Modifier.padding(start = 2.dp))
+                }
                 Text(text = "Đã bán", fontSize = 10.sp, color = Color.Gray)
             }
 
-            // Thanh Progress Đã bán 60% có Gradient và Icon Lửa
+            // Progress Bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(16.dp)
                     .background(Color(0xFFEEEEEE), RoundedCornerShape(8.dp))
             ) {
-                // Gradient theo phần trăm (Ví dụ 60%)
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.6f)
+                        .fillMaxWidth(soldPercent.coerceIn(0f, 1f))
                         .fillMaxHeight()
                         .background(
                             brush = Brush.horizontalGradient(
-                                colors = listOf(Color(0xFFE91E63), Color(0xFFFF5722))
+                                colors = listOf(Color(0xFFEA2727), Color(0xFFEBDF32))
                             ),
                             shape = RoundedCornerShape(8.dp)
                         )
                 )
-                
+
                 Row(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp),
+                    modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
+                    // ICON ĐÃ ĐƯỢC THÊM ANIMATION
                     Icon(
                         imageVector = Icons.Default.Whatshot,
                         contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(12.dp)
+                        tint = Color.Yellow,
+                        modifier = Modifier
+                            .size(12.dp)
+                            .graphicsLayer(
+                                scaleX = scale, // Áp dụng tỷ lệ scale X
+                                scaleY = scale  // Áp dụng tỷ lệ scale Y
+                            )
                     )
-                    Text(text = "Đã bán 60%", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = " ${(soldPercent * 100).toInt()}%",
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
-            // Button Mua ngay Gradient
+            // Nút Mua ngay
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(32.dp)
                     .background(
                         brush = Brush.horizontalGradient(
-                            colors = listOf(Color(0xFF2F93B3), Color(0xFF143F4D))
+                            colors = listOf(colorResource(id = R.color.blue), Color(0xFF143F4D))
                         ),
                         shape = RoundedCornerShape(8.dp)
                     )

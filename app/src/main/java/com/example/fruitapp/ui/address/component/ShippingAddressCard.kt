@@ -1,4 +1,4 @@
-package com.example.fruitapp.ui.address
+package com.example.fruitapp.ui.address.component
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

@@ -1,10 +1,11 @@
-package com.example.fruitapp.ui.screen.user
+package com.example.fruitapp.ui.auth
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,35 +21,41 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.fruitapp.R
+import com.example.fruitapp.ui.navigation.Route
 
 @Composable
-fun BeginScreen() {
+fun BeginScreen(
+    navController: NavController
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Lớp 1: Hình nền
         Image(
             painter = painterResource(id = R.drawable.begin_img),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.6f),
             contentScale = ContentScale.Crop
         )
 
-        // Lớp 2: Overlay màu đen mờ 20%
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.2f))
+                .fillMaxWidth()
+                .fillMaxHeight(0.4f)
+                .align(Alignment.BottomCenter)
+                .background(Color.Black)
         )
-
-        // Lớp 3: Nội dung
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp), // Padding này tạo khoảng cách với mép màn hình
+                .fillMaxWidth()
+                .fillMaxHeight(0.4f)
+                .align(Alignment.BottomCenter)
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -61,21 +68,18 @@ fun BeginScreen() {
             )
 
             Button(
-                onClick = { /*TODO*/ },
+                onClick = { navController.navigate(Route.LOGIN) },
                 modifier = Modifier
-                    .padding(top = 40.dp) // Khoảng cách giữa chữ và nút
+                    .padding(top = 24.dp)
                     .fillMaxWidth(0.85f)
-                    .height(56.dp), // Chiều cao nút 56dp (dễ bấm)
-                shape = RoundedCornerShape(14.dp), // Border radius 16dp
+                    .height(56.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorResource(id = R.color.blue),
                     contentColor = Color.White
                 )
             ) {
-                Text(
-                    text = "Bắt đầu với FruitApp", 
-                    fontSize = 18.sp
-                )
+                Text(text = "Bắt đầu với FruitApp", fontSize = 18.sp)
             }
         }
     }
