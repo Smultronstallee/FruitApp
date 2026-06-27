@@ -5,11 +5,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class ResetPasswordRequest {
+public class VerifyOtpRequest {
     private String email;
     private String otp;
 
-    @NotBlank
-    @Size(min=6)
-    private String passwordNew;
 }
