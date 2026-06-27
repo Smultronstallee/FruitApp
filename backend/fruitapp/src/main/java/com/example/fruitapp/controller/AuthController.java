@@ -1,16 +1,24 @@
 package com.example.fruitapp.controller;
 
-import com.example.fruitapp.service.AuthService;
-import com.example.fruitapp.dto.AuthResponse;
-import com.example.fruitapp.dto.LoginRequest;
-import com.example.fruitapp.dto.RegisterRequest;
-
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
+import com.example.fruitapp.dto.AuthResponse;
+import com.example.fruitapp.dto.ForgotPasswordRequest;
+import com.example.fruitapp.dto.LoginRequest;
+import com.example.fruitapp.dto.RegisterRequest;
+import com.example.fruitapp.dto.ResetPasswordRequest;
+import com.example.fruitapp.dto.VerifyOtpRequest;
+import com.example.fruitapp.service.AuthService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,7 +26,7 @@ import java.util.Map;
 public class AuthController {
     private final AuthService authService;
 
-    //register
+    // register
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         authService.register(req);
@@ -26,7 +34,7 @@ public class AuthController {
 
     }
 
-    //login
+    // login
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
 
@@ -35,31 +43,43 @@ public class AuthController {
 
     }
 
-    //check email
+    // check email
     @GetMapping("/check-email")
     public ResponseEntity<?> checkEmail(@RequestParam String email) {
         boolean exists = authService.checkEmailExists(email);
         return ResponseEntity.ok(Map.of("exists", exists));
     }
 
-    //forgot password
+    // forgot password
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
 
-        authService.forgotPassword(email);
+        authService.forgotPassword(request);
         return ResponseEntity.ok(Map.of("message", "Vui lòng kiểm tra email để đặt lại mật khẩu"));
-
 
     }
 
-    //reset password
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest req) {
+
+        authService.verifyOtp(req.getEmail(), req.getOtp());
+
+        return ResponseEntity.ok(Map.of(
+                "message", "OTP hợp lệ"));
+    }
+
+    // reset password
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String email, @RequestParam String
-            otp, @RequestParam String newPassword) {
+    public ResponseEntity<?> resetPassword(
+            @RequestBody ResetPasswordRequest request) {
 
-        authService.resetPassword(email, otp, newPassword);
-        return ResponseEntity.ok(Map.of("message", "Đặt lại mật khẩu thành công"));
+        authService.resetPassword(
+                request.getEmail(),
+                request.getOtp(),
+                request.getPasswordNew());
 
+        return ResponseEntity.ok(
+                Map.of("message", "Đặt lại mật khẩu thành công"));
     }
 
 }

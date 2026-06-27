@@ -63,7 +63,7 @@ fun BeginScreen(
                 text = "Trái cây có thể giúp tăng lượng chất xơ và kali là những chất dinh dưỡng quan trọng mà nhiều người dùng không có đủ trong chế độ ăn uống của họ.",
                 color = Color.White,
                 textAlign = TextAlign.Center,
-                fontSize = 18.sp,
+                fontSize = 16.sp,
                 lineHeight = 28.sp
             )
 

@@ -16,7 +16,7 @@ import com.example.fruitapp.R
 import com.example.fruitapp.ui.cart.component.CardProduct
 import com.example.fruitapp.ui.component.user.Footer
 import com.example.fruitapp.ui.component.user.Header
-import com.example.fruitapp.ui.component.user.RecommendedProduct
+import com.example.fruitapp.ui.home.component.RecommendedProduct
 
 @Composable
 fun FavoriteProductScreen() {

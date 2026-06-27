@@ -26,22 +26,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final AuthRepository authRepo;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
-        if(header == null || !header.startsWith("Bearer ")){
-            filterChain.doFilter(request, response);
-            return;
-        }
-        String token = header.substring(7);
-        String email = jwtService.extractEmail(token);
-        if(email != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            User u = authRepo.findByEmail(email).orElse(null);
-            if(u != null && jwtService.isTokenValid(token, u.getEmail())){
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        }
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+        throws ServletException, IOException {
+
+    String path = request.getRequestURI();
+
+    // ✅ BỎ QUA AUTH API
+    if (path.startsWith("/api/auth/")) {
         filterChain.doFilter(request, response);
+        return;
     }
+
+    String header = request.getHeader("Authorization");
+
+    if (header == null || !header.startsWith("Bearer ")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
+    System.out.println("PATH = " + request.getRequestURI());
+System.out.println("METHOD = " + request.getMethod());
+    String token = header.substring(7);
+    String email = jwtService.extractEmail(token);
+
+    if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        User u = authRepo.findByEmail(email).orElse(null);
+
+        if (u != null && jwtService.isTokenValid(token, u.getEmail())) {
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
+
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    }
+
+    filterChain.doFilter(request, response);
+}
 
 }

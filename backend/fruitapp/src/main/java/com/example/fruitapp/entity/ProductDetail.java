@@ -39,9 +39,6 @@ public class ProductDetail {
     @Column(name = "freshness_percent")
     private Integer freshnessPercent;
 
-    @Enumerated(EnumType.STRING)
-    private PackageType packaging;
-
     @Column(name = "storage_instruction")
     private String storageInstruction;
 

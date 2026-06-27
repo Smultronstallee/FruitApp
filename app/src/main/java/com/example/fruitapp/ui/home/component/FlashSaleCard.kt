@@ -1,4 +1,4 @@
-package com.example.fruitapp.ui.component.user
+package com.example.fruitapp.ui.home.component
 
 // Thêm các import cho Animation
 import androidx.compose.animation.core.*

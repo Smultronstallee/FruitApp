@@ -8,21 +8,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.fruitapp.dto.AuthResponse;
+import com.example.fruitapp.dto.ForgotPasswordRequest;
 import com.example.fruitapp.dto.LoginRequest;
 import com.example.fruitapp.dto.RegisterRequest;
-import com.example.fruitapp.entity.User;
 import com.example.fruitapp.entity.Provider;
+import com.example.fruitapp.entity.User;
 import com.example.fruitapp.exception.EmailAlreadyExistsException;
-import com.example.fruitapp.exception.InvalidPasswordException;
 import com.example.fruitapp.exception.InvalidOtpException;
-import com.example.fruitapp.exception.SocialAccountException;
+import com.example.fruitapp.exception.InvalidPasswordException;
 import com.example.fruitapp.exception.OtpExpiredException;
+import com.example.fruitapp.exception.SocialAccountException;
 import com.example.fruitapp.exception.UserNotFoundException;
 import com.example.fruitapp.repository.AuthRepository;
 
 import lombok.RequiredArgsConstructor;
-
-
 
 @Service
 @RequiredArgsConstructor
@@ -32,11 +31,11 @@ public class AuthService {
     private final JwtService jwtService;
     private final EmailService emailService;
 
-    //register
+    // register
     @Transactional
-    public void register(RegisterRequest req){
+    public void register(RegisterRequest req) {
 
-        if(authRepo.existsByEmail(req.getEmail())){
+        if (authRepo.existsByEmail(req.getEmail())) {
             throw new EmailAlreadyExistsException();
         }
 
@@ -51,16 +50,16 @@ public class AuthService {
         authRepo.save(u);
     }
 
-    //login
-    public AuthResponse login(LoginRequest req){
+    // login
+    public AuthResponse login(LoginRequest req) {
         User u = authRepo.findByEmail(req.getEmail())
                 .orElseThrow(UserNotFoundException::new);
-        
-        if(u.getProvider() != Provider.LOCAL){
+
+        if (u.getProvider() != Provider.LOCAL) {
             throw new SocialAccountException();
         }
 
-        if(!passwordEncoder.matches(req.getPassword(), u.getPassword())){
+        if (!passwordEncoder.matches(req.getPassword(), u.getPassword())) {
             throw new InvalidPasswordException();
         }
 
@@ -69,57 +68,63 @@ public class AuthService {
                 .email(u.getEmail())
                 .token(token)
                 .build();
-    
-}
+
+    }
 
     // forgot password
     @Transactional
-    public void forgotPassword(String email){
-        User u = authRepo.findByEmail(email)
-            .orElseThrow(UserNotFoundException::new);
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User u = authRepo.findByEmail(request.getEmail())
+                .orElseThrow(UserNotFoundException::new);
 
         String otp = String.valueOf(ThreadLocalRandom
-            .current()
-            .nextInt(100000, 1000000));
-            u.setResetToken(otp);
-            u.setResetTokenExpiry(LocalDateTime.now().plusMinutes(5)
-        );
+                .current()
+                .nextInt(100000, 1000000));
+        u.setResetToken(otp);
+        u.setResetTokenExpiry(LocalDateTime.now().plusMinutes(5));
         authRepo.save(u);
         emailService.sendResetPasswordEmail(u.getEmail(), otp);
-}
+    }
 
-    //reset password
+    // reset password
     @Transactional
-    public void resetPassword(String email, String otp, String newPassword){
+    public void resetPassword(String email, String otp, String passwordNew) {
         User u = authRepo.findByEmail(email)
-            .orElseThrow(UserNotFoundException::new);
-
+                .orElseThrow(UserNotFoundException::new);
 
         validateOtp(u, otp);
 
-        u.setPassword(passwordEncoder.encode(newPassword));
+        u.setPassword(passwordEncoder.encode(passwordNew));
         u.setResetToken(null);
         u.setResetTokenExpiry(null);
         authRepo.save(u);
     }
 
-    //validate otp
-    private void validateOtp(User u, String otp){
-        if(u.getResetToken()==null){
-            throw new InvalidOtpException();
-        }
-        
-        if(!otp.equals(u.getResetToken())){
+    // validate otp
+    private void validateOtp(User u, String otp) {
+        if (u.getResetToken() == null) {
             throw new InvalidOtpException();
         }
 
-        if(u.getResetTokenExpiry() !=null && u.getResetTokenExpiry().isBefore(LocalDateTime.now())){
+        if (!otp.equals(u.getResetToken())) {
+            throw new InvalidOtpException();
+        }
+
+        if (u.getResetTokenExpiry() != null && u.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new OtpExpiredException();
         }
     }
 
-    //check email
-    public boolean checkEmailExists(String email){
+    //verify otp
+    public void verifyOtp(String email, String otp) {
+        User u = authRepo.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+
+        validateOtp(u, otp);
+    }
+
+    // check email
+    public boolean checkEmailExists(String email) {
         return authRepo.existsByEmail(email);
     }
 

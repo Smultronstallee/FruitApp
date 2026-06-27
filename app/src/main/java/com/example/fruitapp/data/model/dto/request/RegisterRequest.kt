@@ -1,6 +1,4 @@
-package com.example.fruitapp.data.model.dto
-
-import com.google.gson.annotations.SerializedName
+package com.example.fruitapp.data.model.dto.request
 
 data class RegisterRequest(
     val userName: String,

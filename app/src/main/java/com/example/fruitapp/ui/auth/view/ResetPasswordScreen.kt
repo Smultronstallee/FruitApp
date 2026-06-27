@@ -3,11 +3,14 @@ package com.example.fruitapp.ui.auth.view
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -21,6 +24,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,37 +35,58 @@ import com.example.fruitapp.ui.auth.viewmodel.AuthViewModel
 import com.example.fruitapp.ui.navigation.Route
 
 @Composable
-fun ForgotPasswordScreen(
+fun ResetPasswordScreen(
+    email: String, // Nhận email từ Navigation
+    otp: String,   // Nhận otp từ Navigation
     viewModel: AuthViewModel,
     navController: NavController
 ) {
-    var email by remember { mutableStateOf("") }
+    var passwordNew by remember { mutableStateOf("") }
+    var confirmPasswordNew by remember { mutableStateOf("") }
     var attempted by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
-    var emailTouched by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var passwordTouched by remember { mutableStateOf(false) }
+    var confirmPasswordTouched by remember { mutableStateOf(false) }
 
-    val isEmailValid = remember(email) {
-        android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    // Quy tắc kiểm tra mật khẩu
+    val passwordError = remember(passwordNew) {
+        when {
+            passwordNew.isEmpty() -> null // Không báo lỗi khi chưa nhập
+            passwordNew.length < 6 -> "Mật khẩu tối thiểu 6 ký tự"
+            !passwordNew.any { it.isUpperCase() } -> "Cần ít nhất 1 chữ hoa"
+            !passwordNew.any { it.isLowerCase() } -> "Cần ít nhất 1 chữ thường"
+            !passwordNew.any { !it.isLetterOrDigit() } -> "Cần ít nhất 1 ký tự đặc biệt"
+            else -> null
+        }
+    }
+
+    val confirmPasswordError = remember(passwordNew, confirmPasswordNew) {
+        when {
+            confirmPasswordNew.isNotEmpty() && passwordNew != confirmPasswordNew -> "Mật khẩu xác nhận không khớp"
+            else -> null
+        }
     }
 
     LaunchedEffect(viewModel.isLoading, viewModel.errorMessage) {
         if (attempted && !viewModel.isLoading) {
-            if (viewModel.errorMessage == null) { 
-                snackbarHostState.showSnackbar(
-                    message = "OTP đã được gửi đến email của bạn!" 
-                )
-                navController.navigate(Route.VERIFY_OTP + "/$email")
+            if (viewModel.errorMessage == null) {
+                snackbarHostState.showSnackbar(message = "Đặt mật khẩu thành công!")
+                navController.navigate(Route.LOGIN) {
+                    popUpTo(Route.LOGIN) { inclusive = true }
+                }
+            } else {
+                viewModel.errorMessage?.let { snackbarHostState.showSnackbar(it) }
             }
             attempted = false
         }
     }
 
     Scaffold(
-        snackbarHost = {
-            SnackbarHost(snackbarHostState)
-        }
-    ) { 
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.background),
@@ -68,6 +94,7 @@ fun ForgotPasswordScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
             )
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -95,7 +122,7 @@ fun ForgotPasswordScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Tiêu đề kèm nút Quay lại ở trên cùng
+                    // Header
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         IconButton(
                             onClick = { navController.popBackStack() },
@@ -108,7 +135,7 @@ fun ForgotPasswordScreen(
                             )
                         }
                         Text(
-                            text = "Quên mật khẩu",
+                            text = "Tạo mật khẩu mới",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -116,7 +143,7 @@ fun ForgotPasswordScreen(
                     }
 
                     Text(
-                        text = "Nhập email để lấy lại mật khẩu cùng FruitApp 🍃",
+                        text = "Vui lòng nhập mật khẩu mới cho tài khoản của bạn.",
                         fontSize = 14.sp,
                         color = Color.White,
                         textAlign = TextAlign.Center,
@@ -124,20 +151,26 @@ fun ForgotPasswordScreen(
                     )
 
                     OutlinedTextField(
-                        value = email,
+                        value = passwordNew,
                         onValueChange = {
-                            email = it
-                            localError = null
-                            viewModel.clearErrorMessage()
+                            passwordNew = it
+                            localError = null // Xóa lỗi khi gõ lại
                         },
-                        placeholder = { Text("Email", color = Color.Gray) },
-                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth().onFocusChanged {
-                            if (!it.isFocused) {
-                                emailTouched = true
+                        placeholder = { Text("Mật khẩu mới", color = Color.Gray) },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
                             }
                         },
-                        isError = emailTouched && !isEmailValid,
+                        isError = passwordTouched && passwordError != null,
+                        modifier = Modifier.fillMaxWidth().onFocusChanged {
+                            if (!it.isFocused) {
+                                passwordTouched = true
+                            }
+                        },
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = Color.Black,
@@ -146,20 +179,47 @@ fun ForgotPasswordScreen(
                             unfocusedContainerColor = Color.White,
                             focusedBorderColor = colorResource(id = R.color.blue),
                             unfocusedBorderColor = Color.Transparent,
-                            errorBorderColor = Color.Red,
-                            focusedLeadingIconColor = colorResource(id = R.color.blue),
-                            unfocusedLeadingIconColor = Color.Gray
+                            errorBorderColor = Color.Red
                         )
                     )
-                    if (emailTouched && !isEmailValid) {
-                        Text(
-                            text = "Email không đúng định dạng",
-                            color = Color.Red,
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(start = 8.dp, top = 2.dp))
-                    }
 
-                    val displayError = localError ?: viewModel.errorMessage
+                    OutlinedTextField(
+                        value = confirmPasswordNew,
+                        onValueChange = {
+                            confirmPasswordNew = it
+                            localError = null
+                        },
+                        placeholder = { Text("Xác nhận mật khẩu", color = Color.Gray) },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val image = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Icon(imageVector = image, contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password")
+                            }
+                        },
+                        isError = confirmPasswordTouched && confirmPasswordError != null,
+                        modifier = Modifier.fillMaxWidth().onFocusChanged {
+                            if (!it.isFocused) {
+                                confirmPasswordTouched = true
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = colorResource(id = R.color.blue),
+                            unfocusedBorderColor = Color.Transparent,
+                            errorBorderColor = Color.Red
+                        )
+                    )
+
+                    // Hiển thị lỗi
+                    val displayPasswordError = if (passwordTouched) passwordError else null
+                    val displayConfirmPasswordError = if (confirmPasswordTouched) confirmPasswordError else null
+                    val displayError = localError ?: displayPasswordError ?: displayConfirmPasswordError ?: viewModel.errorMessage
                     displayError?.let {
                         Text(
                             text = it,
@@ -173,20 +233,23 @@ fun ForgotPasswordScreen(
                     Button(
                         onClick = {
                             when {
-                                email.isBlank() -> {
-                                    localError = "Vui lòng nhập email"
+                                passwordNew.isBlank() || confirmPasswordNew.isBlank() -> {
+                                    localError = "Vui lòng nhập đầy đủ thông tin"
                                 }
-                                !isEmailValid -> {
-                                    localError = "Email không đúng định dạng"
+                                passwordError != null -> {
+                                    localError = passwordError
+                                }
+                                confirmPasswordError != null -> {
+                                    localError = confirmPasswordError
                                 }
                                 else -> {
                                     attempted = true
                                     viewModel.clearErrorMessage()
-                                    viewModel.forgotPassword(email)
+                                    viewModel.resetPassword(email, otp, passwordNew)
                                 }
                             }
                         },
-                        enabled = !viewModel.isLoading && !(email.isNotEmpty() && !isEmailValid) && viewModel.errorMessage == null,
+                        enabled = !viewModel.isLoading && passwordError == null && confirmPasswordError == null && passwordNew.isNotEmpty() && confirmPasswordNew.isNotEmpty(),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 4.dp)
@@ -204,7 +267,7 @@ fun ForgotPasswordScreen(
                                 color = Color.White
                             )
                         } else {
-                            Text(text = "Gửi email", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "Xác nhận đổi mật khẩu", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

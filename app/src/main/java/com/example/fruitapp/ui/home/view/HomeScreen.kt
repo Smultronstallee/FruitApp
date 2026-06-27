@@ -1,6 +1,5 @@
-package com.example.fruitapp.ui.screen.user
+package com.example.fruitapp.ui.home.view
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,6 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fruitapp.R
 import com.example.fruitapp.ui.component.user.*
+import com.example.fruitapp.ui.home.component.BestSeller
+import com.example.fruitapp.ui.home.component.FlashSale
+import com.example.fruitapp.ui.home.component.SuggestedProduct
 
 @Composable
 fun HomeScreen() {
