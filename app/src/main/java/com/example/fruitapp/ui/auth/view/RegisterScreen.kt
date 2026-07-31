@@ -1,5 +1,6 @@
 package com.example.fruitapp.ui.auth
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
@@ -15,10 +16,12 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged // Thêm import này
+import androidx.compose.ui.focus.onFocusChanged // Import quan trọng để sửa lỗi Unresolved reference
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
@@ -34,7 +37,7 @@ import androidx.navigation.NavController
 import com.example.fruitapp.R
 import com.example.fruitapp.ui.auth.viewmodel.AuthViewModel
 import com.example.fruitapp.ui.navigation.Route
-
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(
@@ -45,18 +48,22 @@ fun RegisterScreen(
     var userName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var attemped by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
+
+    // Theo dõi việc người dùng đã chạm vào ô nhập chưa
     var emailTouched by remember { mutableStateOf(false) }
     var passwordTouched by remember { mutableStateOf(false) }
+
     val snackbarHostState = remember { SnackbarHostState() }
-    val focusManager = LocalFocusManager.current
+    val ggManager = remember { GoogleAuthManager(context) }
+    val scope = rememberCoroutineScope()
+    val activity = LocalContext.current as Activity
 
     // Quy tắc kiểm tra
     val isEmailValid = remember(email) {
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
-    
+
     val passwordError = remember(password) {
         when {
             password.isEmpty() -> null
@@ -68,21 +75,31 @@ fun RegisterScreen(
         }
     }
 
-    LaunchedEffect(viewModel.isLoading, viewModel.errorMessage) {
-        if (attemped && !viewModel.isLoading && viewModel.errorMessage == null){
-            snackbarHostState.showSnackbar(
-                message = "Đăng ký thành công! Vui lòng đăng nhập."
-            )
-            attemped = false
+    // Nút chỉ bật khi toàn bộ form hợp lệ
+    val isFormValid =
+        userName.isNotBlank() &&
+                isEmailValid &&
+                passwordError == null &&
+                password.isNotEmpty() &&
+                viewModel.emailError == null
+    LaunchedEffect(viewModel.isRegisterSuccess) {
+        if (viewModel.isRegisterSuccess) {
+
+            snackbarHostState.showSnackbar("Đăng ký thành công!")
+
+            viewModel.resetState()
+
             navController.navigate(Route.LOGIN) {
-                popUpTo(Route.REGISTER) { inclusive = true }
+                popUpTo(Route.REGISTER) {
+                    inclusive = true
+                }
             }
         }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { 
+    ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.background),
@@ -100,7 +117,8 @@ fun RegisterScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -118,39 +136,26 @@ fun RegisterScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = "Đăng ký",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Text(text = "Đăng ký", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     Text(
                         text = "Bắt đầu hành trình mới cùng FruitApp 🍃",
-                        fontSize = 14.sp,
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
+                        fontSize = 14.sp, color = Color.White, textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
                     // Họ tên
                     OutlinedTextField(
                         value = userName,
-                        onValueChange = {
-                            userName = it
-                            localError = null
-                        },
+                        onValueChange = { userName = it; localError = null },
                         placeholder = { Text("Họ và tên", color = Color.Gray) },
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Default.Person, null) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = colorResource(id = R.color.blue),
-                            unfocusedBorderColor = Color.Transparent
+                            focusedTextColor = Color.Black, unfocusedTextColor = Color.Black,
+                            focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
+                            focusedBorderColor = colorResource(id = R.color.blue), unfocusedBorderColor = Color.Transparent
                         )
                     )
 
@@ -158,38 +163,45 @@ fun RegisterScreen(
                     Column(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value = email,
-                            onValueChange = {
-                                email = it
-                                // Khi người dùng gõ, xóa cả lỗi local và lỗi từ server
-                                localError = null 
-                                viewModel.clearErrorMessage()
-                            },
+                            onValueChange = { email = it; localError = null; viewModel.clearErrorMessage() },
                             placeholder = { Text("Email", color = Color.Gray) },
-                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Default.Email, null) },
                             isError = emailTouched && !isEmailValid,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onFocusChanged { focusState ->
-                                    if (!focusState.isFocused) {
+                                .onFocusChanged {
+                                    if (!it.isFocused) {
                                         emailTouched = true
-                                    }
-                                    if (!focusState.isFocused && email.isNotEmpty() && isEmailValid) {
-                                        viewModel.checkEmailExists(email) // Gọi kiểm tra khi mất focus
+
+                                        if (isEmailValid) {
+                                            viewModel.checkEmailExists(email)
+                                        }
                                     }
                                 },
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White,
-                                focusedBorderColor = colorResource(id = R.color.blue),
-                                unfocusedBorderColor = Color.Transparent
+                                focusedTextColor = Color.Black, unfocusedTextColor = Color.Black,
+                                focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
+                                focusedBorderColor = colorResource(id = R.color.blue), unfocusedBorderColor = Color.Transparent
                             )
                         )
                         if (emailTouched && !isEmailValid) {
-                            Text("Email không đúng định dạng", color = Color.Red, fontSize = 11.sp, modifier = Modifier.padding(start = 8.dp, top = 2.dp))
+                            Text(
+                                "Email không đúng định dạng",
+                                color = Color.Red,
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+
+                        viewModel.emailError?.let {
+                            Text(
+                                text = it,
+                                color = Color.Red,
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
                         }
                     }
 
@@ -197,76 +209,41 @@ fun RegisterScreen(
                     Column(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value = password,
-                            onValueChange = {
-                                password = it
-                                localError = null 
-                                viewModel.clearErrorMessage()
-                            },
+                            onValueChange = { password = it; localError = null; viewModel.clearErrorMessage() },
                             placeholder = { Text("Mật khẩu", color = Color.Gray) },
-                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                            modifier = Modifier.fillMaxWidth().onFocusChanged {
-                                if (!it.isFocused) {
-                                    passwordTouched = true
-                                }
-                            },
+                            leadingIcon = { Icon(Icons.Default.Lock, null) },
+                            modifier = Modifier.fillMaxWidth().onFocusChanged { if (!it.isFocused) passwordTouched = true },
                             visualTransformation = PasswordVisualTransformation(),
                             isError = passwordTouched && passwordError != null,
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White,
-                                focusedBorderColor = colorResource(id = R.color.blue),
-                                unfocusedBorderColor = Color.Transparent
+                                focusedTextColor = Color.Black, unfocusedTextColor = Color.Black,
+                                focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
+                                focusedBorderColor = colorResource(id = R.color.blue), unfocusedBorderColor = Color.Transparent
                             )
                         )
                         if (passwordTouched) passwordError?.let {
-                            Text(it, color = Color.Red, fontSize = 11.sp, modifier = Modifier.padding(start = 8.dp, top = 2.dp))
+                            Text(it, color = Color.Red, fontSize = 11.sp, modifier = Modifier.padding(start = 8.dp))
                         }
                     }
 
-                    // Hiển thị lỗi từ server
-                    val displayError = localError ?: viewModel.errorMessage
+                    // Hiển thị lỗi
+                    val displayError = localError ?: viewModel.authError
                     displayError?.let {
-                        Text(
-                            text = it,
-                            color = Color.Red,
-                            fontSize = 13.sp,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
+                        Text(text = it, color = Color.Red, fontSize = 13.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                     }
 
                     Button(
                         onClick = {
-                            when {
-                                userName.isBlank() || email.isBlank() || password.isBlank() -> {
-                                    localError = "Vui lòng nhập đầy đủ thông tin"
-                                }
-                                !isEmailValid -> {
-                                    localError = "Email không đúng định dạng"
-                                }
-                                passwordError != null -> {
-                                    localError = passwordError
-                                }
-                                else -> {
-                                    attemped = true
-                                    viewModel.clearErrorMessage()
-                                    viewModel.register(userName, email, password)
-                                }
-                            }
+                            viewModel.register(userName, email, password)
                         },
-                        enabled = !viewModel.isLoading && !(email.isNotEmpty() && !isEmailValid) && !(password.isNotEmpty() && passwordError != null) && viewModel.errorMessage == null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
-                            .height(56.dp),
+                        enabled = isFormValid && !viewModel.isLoading,
+                        modifier = Modifier.fillMaxWidth().height(56.dp).padding(top = 4.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colorResource(id = R.color.blue),
-                            disabledContainerColor = Color.Gray // Màu khi nút bị tắt
+                            disabledContainerColor = Color.Gray
                         )
                     ) {
                         if (viewModel.isLoading) {
@@ -292,8 +269,10 @@ fun RegisterScreen(
                     ) {
                         IconButton(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://192.168.1.4:8080/oauth2/authorization/google"))
-                                context.startActivity(intent)
+                                scope.launch {
+                                    val token = ggManager.signIn()
+                                    viewModel.googleLogin(token)
+                                }
                             },
                             modifier = Modifier.size(64.dp)
                         ) {
@@ -302,8 +281,11 @@ fun RegisterScreen(
                         Spacer(modifier = Modifier.width(24.dp))
                         IconButton(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://192.168.1.4:8080/oauth2/authorization/facebook"))
-                                context.startActivity(intent)
+                                FacebookAuthManager.login(activity) { token ->
+                                    if (token != null) {
+                                        viewModel.facebookLogin(token)
+                                    }
+                                }
                             },
                             modifier = Modifier.size(64.dp)
                         ) {

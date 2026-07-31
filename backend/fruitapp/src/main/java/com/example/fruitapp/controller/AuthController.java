@@ -10,13 +10,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.fruitapp.dto.AuthResponse;
-import com.example.fruitapp.dto.ForgotPasswordRequest;
-import com.example.fruitapp.dto.LoginRequest;
-import com.example.fruitapp.dto.RegisterRequest;
-import com.example.fruitapp.dto.ResetPasswordRequest;
-import com.example.fruitapp.dto.VerifyOtpRequest;
+import com.example.fruitapp.dto.request.ForgotPasswordRequest;
+import com.example.fruitapp.dto.request.LoginRequest;
+import com.example.fruitapp.dto.request.RegisterRequest;
+import com.example.fruitapp.dto.request.ResetPasswordRequest;
+import com.example.fruitapp.dto.request.VerifyOtpRequest;
+import com.example.fruitapp.dto.response.AuthResponse;
 import com.example.fruitapp.service.AuthService;
+import com.example.fruitapp.service.FacebookService;
+import com.example.fruitapp.service.GoogleService;
+import com.example.fruitapp.dto.request.GgLoginRequest;
+import com.example.fruitapp.entity.Provider;
+import com.example.fruitapp.dto.request.FbLoginRequest;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +30,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final GoogleService ggService;
+    private final FacebookService facebookService;
+
 
     // register
     @PostMapping("/register")
@@ -82,4 +90,42 @@ public class AuthController {
                 Map.of("message", "Đặt lại mật khẩu thành công"));
     }
 
+    //gg
+    @PostMapping("/google")
+public ResponseEntity<?> googleLogin(
+        @RequestBody GgLoginRequest request
+){
+
+    AuthResponse googleUser =
+            ggService.verify(request.getIdToken());
+
+
+    return ResponseEntity.ok(
+            authService.socialLogin(
+                    googleUser.getEmail(),
+                    googleUser.getUserName(),
+                    Provider.GOOGLE,
+                    googleUser.getSocialId()
+            )
+    );
+}
+//fb
+@PostMapping("/facebook")
+public ResponseEntity<?> facebookLogin(@RequestBody FbLoginRequest request) {
+    try {
+        AuthResponse fbUser = facebookService.verify(request.getAccessToken());
+
+        return ResponseEntity.ok(
+            authService.socialLogin(
+                fbUser.getEmail(),
+                fbUser.getUserName(),
+                Provider.FACEBOOK,
+                fbUser.getSocialId()
+            )
+        );
+    } catch (Exception e) {
+        e.printStackTrace(); // In lỗi ra console
+        throw e;
+    }
+}
 }

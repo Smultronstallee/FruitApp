@@ -1,4 +1,4 @@
-package com.example.fruitapp.dto;
+package com.example.fruitapp.dto.request;
 import lombok.Data;
 
 @Data

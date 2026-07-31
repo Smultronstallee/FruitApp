@@ -1,8 +1,9 @@
 package com.example.fruitapp.security;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -52,8 +53,12 @@ System.out.println("METHOD = " + request.getMethod());
         User u = authRepo.findByEmail(email).orElse(null);
 
         if (u != null && jwtService.isTokenValid(token, u.getEmail())) {
+            // Tạo danh sách quyền từ vai trò của người dùng
+            List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(u.getRole().getName().name()));
+
+            // Đưa toàn bộ đối tượng User vào principal và cung cấp danh sách quyền
             UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
+                    new UsernamePasswordAuthenticationToken(u, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }

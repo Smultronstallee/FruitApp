@@ -1,5 +1,6 @@
 package com.example.fruitapp.ui.auth.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,120 +17,160 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class   AuthViewModel @Inject constructor(
+class AuthViewModel @Inject constructor(
     private val repository: AuthRepository
 ) : ViewModel() {
 
-    var errorMessage by mutableStateOf<String?>(null)
+    var emailError by mutableStateOf<String?>(null)
         private set
 
-    fun clearErrorMessage(){
-        errorMessage=null
-    }
+    var authError by mutableStateOf<String?>(null)
+        private set
 
     var isLoading by mutableStateOf(false)
         private set
 
+    // Thêm các state để nhận biết trạng thái thành công
+    var isRegisterSuccess by mutableStateOf(false)
+        private set
+
+    var isLoginSuccess by mutableStateOf(false)
+        private set
+
+    fun clearErrorMessage() {
+        authError = null
+        emailError = null
+    }
+
+    fun resetState() {
+        isRegisterSuccess = false
+        isLoginSuccess = false
+        authError = null
+        emailError = null
+    }
+
     //register
-    fun register(userName: String, email: String, password: String){
+    fun register(userName: String, email: String, password: String) {
         viewModelScope.launch {
-            try{
+            try {
                 isLoading = true
+                authError = null
+                isRegisterSuccess = false
+
                 repository.register(RegisterRequest(userName, email, password))
-            } catch (e: Exception){
-                errorMessage = e.message
+
+                isRegisterSuccess = true
+
+            } catch (e: Exception) {
+                authError = e.message ?: "Đăng ký thất bại"
             } finally {
                 isLoading = false
             }
-        
         }
     }
 
     //login
-    fun login(email: String, password: String){
+    fun login(email: String, password: String) {
         viewModelScope.launch {
-            try{
+            try {
                 isLoading = true
+                authError = null
+                isLoginSuccess = false
                 repository.login(LoginRequest(email, password))
-        }catch(e: Exception){
-            errorMessage = e.message
+                isLoginSuccess = true
+            } catch (e: Exception) {
+                authError = e.message ?: "Đăng nhập thất bại"
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    //google login
+    fun googleLogin(idToken: String) = viewModelScope.launch {
+        try {
+            isLoading = true
+            authError = null
+            isLoginSuccess = false
+            repository.googleLogin(idToken)
+            isLoginSuccess = true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            authError = e.message ?: "Lỗi đăng nhập Google"
         } finally {
             isLoading = false
         }
+    }
+
+    //facebook login
+    fun facebookLogin(accessToken: String) = viewModelScope.launch {
+        try {
+            isLoading = true
+            authError = null
+            isLoginSuccess = false
+            repository.facebookLogin(accessToken)
+            isLoginSuccess = true
+        } catch (e: Exception) {
+            Log.e("FACEBOOK_LOGIN", "LOGIN FAILED", e)
+            authError = e.message ?: "Lỗi đăng nhập Facebook"
+        } finally {
+            isLoading = false
         }
     }
 
-    //forgot password
-    fun forgotPassword(email: String){
+    // Các hàm khác giữ nguyên logic nhưng có cập nhật isLoading
+    fun forgotPassword(email: String) {
         viewModelScope.launch {
-            try{
+            try {
                 isLoading = true
+                emailError = null
                 repository.forgotPassword(ForgotPasswordRequest(email))
-            }catch (e: Exception){
-                errorMessage = e.message
+            } catch (e: Exception) {
+                emailError = e.message
             } finally {
                 isLoading = false
             }
         }
     }
 
-    //verify otp
-    fun verifyOtp(email: String, otp: String){
+    fun verifyOtp(email: String, otp: String) {
         viewModelScope.launch {
-            try{
+            try {
                 isLoading = true
-                repository.verifyOtp(
-                    VerifyOtpRequest(
-                        email = email,
-                        otp = otp
-                    )
-                )
-            }catch(e: Exception){
-                errorMessage = e.message
+                authError = null
+                repository.verifyOtp(VerifyOtpRequest(email, otp))
+            } catch (e: Exception) {
+                authError = e.message
             } finally {
                 isLoading = false
             }
         }
     }
 
-    //reset password
-    fun resetPassword(email: String, otp: String, passwordNew: String){
+    fun resetPassword(email: String, otp: String, passwordNew: String) {
         viewModelScope.launch {
-            try{
+            try {
                 isLoading = true
-                repository.resetPassword(
-                    ResetPasswordRequest(
-                        email = email,
-                        otp = otp,
-                        passwordNew = passwordNew
-                    )
-                )
-            } catch(e: Exception){
-                errorMessage = e.message
+                authError = null
+                repository.resetPassword(ResetPasswordRequest(email, otp, passwordNew))
+            } catch (e: Exception) {
+                authError = e.message
             } finally {
                 isLoading = false
             }
         }
     }
 
-    //check email exists
     fun checkEmailExists(email: String) {
         viewModelScope.launch {
             try {
-                // Không bật isLoading để kiểm tra ngầm
                 val exists = repository.checkEmailExists(email)
                 if (exists) {
-                    errorMessage = "Email này đã được sử dụng"
-                } else {
-                    // Chỉ xóa lỗi khi lỗi đó là về email tồn tại
-                    if (errorMessage == "Email này đã được sử dụng") {
-                        errorMessage = null
-                    }
+                    emailError = "Email này đã được sử dụng"
+                } else if (emailError == "Email này đã được sử dụng") {
+                    emailError = null
                 }
-            } catch (e: Exception) {
-                // Bỏ qua lỗi mạng trong trường hợp kiểm tra ngầm để không làm phiền người dùng
-            }
+            } catch (e: Exception) { }
         }
     }
-
 }

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,15 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
 }
+val localProperties = Properties()
+
+val localFile = rootProject.file("local.properties")
+
+if (localFile.exists()) {
+    localProperties.load(localFile.inputStream())
+}
+val ggClientId = localProperties["GG_CLIENT_ID"] as String?
+    ?: throw GradleException("Missing GG_CLIENT_ID")
 
 android {
     namespace = "com.example.fruitapp"
@@ -18,6 +29,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "GG_CLIENT_ID", "\"$ggClientId\"")
 
          lint {
         disable += "NullSafeMutableLiveData"
@@ -36,6 +49,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
@@ -85,6 +99,15 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    //auth
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    implementation("com.facebook.android:facebook-login:18.0.3")
+    //implementation("com.facebook.android:facebook-android-sdk:[4,5)")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 
