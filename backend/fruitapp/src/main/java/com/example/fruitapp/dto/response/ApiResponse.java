@@ -1,4 +1,4 @@
-package com.example.fruitapp.dto;
+package com.example.fruitapp.dto.response;
 import lombok.Data;
 import lombok.Builder;
 

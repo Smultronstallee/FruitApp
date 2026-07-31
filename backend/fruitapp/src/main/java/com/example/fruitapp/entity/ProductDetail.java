@@ -1,8 +1,6 @@
 package com.example.fruitapp.entity;
 import java.time.LocalDate;
 
-import org.springframework.format.annotation.DurationFormat.Unit;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

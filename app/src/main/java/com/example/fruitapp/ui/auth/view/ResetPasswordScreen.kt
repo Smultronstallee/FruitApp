@@ -70,15 +70,15 @@ fun ResetPasswordScreen(
         }
     }
 
-    LaunchedEffect(viewModel.isLoading, viewModel.errorMessage) {
+    LaunchedEffect(viewModel.isLoading, viewModel.authError) {
         if (attempted && !viewModel.isLoading) {
-            if (viewModel.errorMessage == null) {
+            if (viewModel.authError == null) {
                 snackbarHostState.showSnackbar(message = "Đặt mật khẩu thành công!")
                 navController.navigate(Route.LOGIN) {
                     popUpTo(Route.LOGIN) { inclusive = true }
                 }
             } else {
-                viewModel.errorMessage?.let { snackbarHostState.showSnackbar(it) }
+                viewModel.authError?.let { snackbarHostState.showSnackbar(it) }
             }
             attempted = false
         }
@@ -86,7 +86,7 @@ fun ResetPasswordScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) {
+    ) {innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.background),
@@ -104,7 +104,8 @@ fun ResetPasswordScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -219,7 +220,7 @@ fun ResetPasswordScreen(
                     // Hiển thị lỗi
                     val displayPasswordError = if (passwordTouched) passwordError else null
                     val displayConfirmPasswordError = if (confirmPasswordTouched) confirmPasswordError else null
-                    val displayError = localError ?: displayPasswordError ?: displayConfirmPasswordError ?: viewModel.errorMessage
+                    val displayError = localError ?: displayPasswordError ?: displayConfirmPasswordError ?: viewModel.authError
                     displayError?.let {
                         Text(
                             text = it,

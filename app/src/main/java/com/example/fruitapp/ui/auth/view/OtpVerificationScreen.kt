@@ -36,15 +36,15 @@ fun OtpVerificationScreen(
     var attempted by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(viewModel.isLoading, viewModel.errorMessage) {
+    LaunchedEffect(viewModel.isLoading, viewModel.authError) {
         if (attempted && !viewModel.isLoading) {
-            if (viewModel.errorMessage == null) {
+            if (viewModel.authError == null) {
                 snackbarHostState.showSnackbar(
                     message = "Xác thực OTP thành công!"
                 )
                 navController.navigate(Route.RESET_PASSWORD + "/$email/$otp")
             } else {
-                viewModel.errorMessage?.let { snackbarHostState.showSnackbar(it) }
+                viewModel.authError?.let { snackbarHostState.showSnackbar(it) }
             }
             attempted = false // Reset lại trạng thái sau mỗi lần thử
         }
@@ -52,7 +52,7 @@ fun OtpVerificationScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { 
+    ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.background),
@@ -70,7 +70,8 @@ fun OtpVerificationScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

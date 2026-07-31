@@ -1,5 +1,6 @@
 package com.example.fruitapp.ui.auth
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
@@ -34,6 +35,7 @@ import androidx.navigation.NavController
 import com.example.fruitapp.R
 import com.example.fruitapp.ui.auth.viewmodel.AuthViewModel
 import com.example.fruitapp.ui.navigation.Route
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -43,10 +45,12 @@ fun LoginScreen(
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var attempted by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
     var emailTouched by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val ggManager = remember { GoogleAuthManager(context) }
+    val scope = rememberCoroutineScope()
+    val activity = LocalContext.current as Activity
 
     // Quy tắc kiểm tra
     val isEmailValid = remember(email) {
@@ -58,19 +62,22 @@ fun LoginScreen(
         password.isNotEmpty()
     }
 
-    LaunchedEffect(viewModel.isLoading, viewModel.errorMessage) {
-        if (attempted && !viewModel.isLoading && viewModel.errorMessage == null) {
-            snackbarHostState.showSnackbar(message = "Đăng nhập thành công!")
-            attempted = false
+    LaunchedEffect(viewModel.isLoginSuccess) {
+        if (viewModel.isLoginSuccess) {
+
+            viewModel.resetState()
+
             navController.navigate(Route.HOME) {
-                popUpTo(Route.LOGIN) { inclusive = true }
+                popUpTo(Route.LOGIN) {
+                    inclusive = true
+                }
             }
         }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { 
+    ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.background),
@@ -88,7 +95,8 @@ fun LoginScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -132,9 +140,12 @@ fun LoginScreen(
                             placeholder = { Text("Email", color = Color.Gray) },
                             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                             isError = emailTouched && !isEmailValid,
-                            modifier = Modifier.fillMaxWidth().onFocusChanged {
-                                if (!it.isFocused) {
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusChanged {
+                                if (!it.isFocused && email.isNotBlank()) {
                                     emailTouched = true
+                                    viewModel.checkEmailExists(email)
                                 }
                             },
                             shape = RoundedCornerShape(12.dp),
@@ -194,7 +205,7 @@ fun LoginScreen(
                     )
 
                     // Hiển thị lỗi từ server
-                    val displayError = localError ?: viewModel.errorMessage
+                    val displayError = localError ?: viewModel.authError
                     displayError?.let {
                         Text(
                             text = it,
@@ -215,12 +226,11 @@ fun LoginScreen(
                                     localError = "Email không đúng định dạng"
                                 }
                                 else -> {
-                                    attempted = true
                                     viewModel.login(email, password)
                                 }
                             }
                         },
-                        enabled = !viewModel.isLoading && !(email.isNotEmpty() && !isEmailValid) && viewModel.errorMessage == null,
+                        enabled = !viewModel.isLoading && !(email.isNotEmpty() && !isEmailValid) && viewModel.authError == null,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 4.dp)
@@ -263,8 +273,17 @@ fun LoginScreen(
                     ) {
                         IconButton(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://192.168.1.4:8080/oauth2/authorization/google"))
-                                context.startActivity(intent)
+                                scope.launch {
+                                    try {
+                                        val token = ggManager.signIn()
+                                        android.util.Log.d("GOOGLE_LOGIN", token)
+
+                                        viewModel.googleLogin(token)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        android.util.Log.e("GOOGLE_LOGIN", e.toString())
+                                    }
+                                }
                             },
                             modifier = Modifier.size(64.dp)
                         ) {
@@ -277,8 +296,11 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.width(24.dp))
                         IconButton(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://192.168.1.4:8080/oauth2/authorization/facebook"))
-                                context.startActivity(intent)
+                                FacebookAuthManager.login(activity) { token ->
+                                    if (token != null) {
+                                        viewModel.facebookLogin(token)
+                                    }
+                                }
                             },
                             modifier = Modifier.size(64.dp)
                         ) {

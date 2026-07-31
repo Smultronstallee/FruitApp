@@ -2,8 +2,10 @@ package com.example.fruitapp.data.repository
 
 import com.example.fruitapp.data.api.AuthApi
 import com.example.fruitapp.data.local.TokenManager
+import com.example.fruitapp.data.model.dto.request.FbLoginRequest
 import com.example.fruitapp.data.model.dto.response.AuthResponse
 import com.example.fruitapp.data.model.dto.request.ForgotPasswordRequest
+import com.example.fruitapp.data.model.dto.request.GoogleLoginRequest
 import com.example.fruitapp.data.model.dto.request.LoginRequest
 import com.example.fruitapp.data.model.dto.response.MessageResponse
 import com.example.fruitapp.data.model.dto.request.RegisterRequest
@@ -22,7 +24,7 @@ class AuthRepository @Inject constructor(
     ): MessageResponse {
         return authApi.register(request)
     }
-    
+
     //login
     suspend fun login(
         request: LoginRequest
@@ -36,23 +38,24 @@ class AuthRepository @Inject constructor(
     //forgot password
     suspend fun forgotPassword(
         request: ForgotPasswordRequest
-    ): MessageResponse{
+    ): MessageResponse {
         return authApi.forgotPassword(request)
     }
 
     //verify otp
     suspend fun verifyOtp(
         request: VerifyOtpRequest
-    ): MessageResponse{
+    ): MessageResponse {
         return authApi.verifyOtp(request)
     }
 
     //reset password
     suspend fun resetPassword(
         request: ResetPasswordRequest
-    ): MessageResponse{
+    ): MessageResponse {
         return authApi.resetPassword(request)
     }
+
     // check emai
     suspend fun checkEmailExists(email: String): Boolean {
         return try {
@@ -63,4 +66,14 @@ class AuthRepository @Inject constructor(
             false
         }
     }
+
+    //google login
+    suspend fun googleLogin(
+        idToken: String
+    ) = authApi.googleLogin(GoogleLoginRequest(idToken))
+
+    //facebook login
+    suspend fun facebookLogin(
+        accessToken: String
+    )=authApi.facebookLogin(FbLoginRequest(accessToken))
 }

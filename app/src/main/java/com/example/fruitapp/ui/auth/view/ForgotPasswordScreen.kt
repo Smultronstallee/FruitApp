@@ -44,9 +44,9 @@ fun ForgotPasswordScreen(
         android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
 
-    LaunchedEffect(viewModel.isLoading, viewModel.errorMessage) {
+    LaunchedEffect(viewModel.isLoading, viewModel.authError) {
         if (attempted && !viewModel.isLoading) {
-            if (viewModel.errorMessage == null) { 
+            if (viewModel.authError == null) {
                 snackbarHostState.showSnackbar(
                     message = "OTP đã được gửi đến email của bạn!" 
                 )
@@ -60,7 +60,7 @@ fun ForgotPasswordScreen(
         snackbarHost = {
             SnackbarHost(snackbarHostState)
         }
-    ) { 
+    ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.background),
@@ -77,7 +77,8 @@ fun ForgotPasswordScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -159,7 +160,7 @@ fun ForgotPasswordScreen(
                             modifier = Modifier.padding(start = 8.dp, top = 2.dp))
                     }
 
-                    val displayError = localError ?: viewModel.errorMessage
+                    val displayError = localError ?: viewModel.emailError
                     displayError?.let {
                         Text(
                             text = it,
@@ -186,7 +187,7 @@ fun ForgotPasswordScreen(
                                 }
                             }
                         },
-                        enabled = !viewModel.isLoading && !(email.isNotEmpty() && !isEmailValid) && viewModel.errorMessage == null,
+                        enabled = !viewModel.isLoading && !(email.isNotEmpty() && !isEmailValid) && viewModel.emailError == null,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 4.dp)

@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 
 
 @Entity
@@ -37,9 +38,11 @@ public class Product {
 
     private String name;
     private String description;
-    private Double price;
+    private BigDecimal price;
     private Integer stock;
-    private boolean status;// còn hàng và hết hàng
+
+    @Column(name = "is_active")
+    private Boolean isActive;//có được hiển thị không
     
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;

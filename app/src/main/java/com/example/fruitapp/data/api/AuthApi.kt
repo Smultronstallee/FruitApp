@@ -1,7 +1,9 @@
 package com.example.fruitapp.data.api
 
+import com.example.fruitapp.data.model.dto.request.FbLoginRequest
 import com.example.fruitapp.data.model.dto.response.AuthResponse
 import com.example.fruitapp.data.model.dto.request.ForgotPasswordRequest
+import com.example.fruitapp.data.model.dto.request.GoogleLoginRequest
 import com.example.fruitapp.data.model.dto.request.LoginRequest
 import com.example.fruitapp.data.model.dto.response.MessageResponse
 import com.example.fruitapp.data.model.dto.request.RegisterRequest
@@ -37,4 +39,12 @@ interface AuthApi {
     //check email
     @POST("api/auth/check-email")
     suspend fun checkEmailExists(@Body email: String): Response<MessageResponse>
+
+    //google login
+    @POST("api/auth/google")
+    suspend fun googleLogin(@Body idToken: GoogleLoginRequest): AuthResponse
+
+    //facebook login
+    @POST("api/auth/facebook")
+    suspend fun facebookLogin(@Body accessToken: FbLoginRequest): AuthResponse
 }
