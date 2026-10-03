@@ -107,7 +107,9 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     implementation("com.facebook.android:facebook-login:18.0.3")
-    //implementation("com.facebook.android:facebook-android-sdk:[4,5)")
+
+    //coil
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 

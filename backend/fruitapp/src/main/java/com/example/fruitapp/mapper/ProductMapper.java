@@ -3,15 +3,12 @@ package com.example.fruitapp.mapper;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
-import lombok.RequiredArgsConstructor;
-
 import com.example.fruitapp.entity.Product;
 import com.example.fruitapp.dto.response.ProductResponse;
 
 @Component
-@RequiredArgsConstructor
 public class ProductMapper {
-    public static ProductResponse fromEntity(Product product) {
+    public static ProductResponse mapProductResponse(Product product) {
         if (product == null) {
             return null;
         }

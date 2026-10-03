@@ -28,9 +28,11 @@ public class Category {
     private Integer id;
 
     private String name;
-    private String slug;
     private String image;
     private String description;
+
+    @Column(name = "public_id")
+    private String publicId;
 
     @CreationTimestamp
     @Column(name = "created_at")

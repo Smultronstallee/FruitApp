@@ -6,20 +6,27 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.fruitapp.R
 import com.example.fruitapp.ui.component.user.*
 import com.example.fruitapp.ui.home.component.BestSeller
 import com.example.fruitapp.ui.home.component.FlashSale
 import com.example.fruitapp.ui.home.component.SuggestedProduct
+import com.example.fruitapp.ui.home.viewmodel.HomeViewModel
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    viewModel: HomeViewModel = hiltViewModel()
+) {
+    val products by viewModel.products.collectAsState()
     Scaffold(
         bottomBar = { Footer() },
         containerColor = colorResource(id = R.color.black) // Nền đen toàn trang
@@ -31,7 +38,15 @@ fun HomeScreen() {
                 .verticalScroll(rememberScrollState()) // Cho phép cuộn trang
         ) {
             // 1. Header (Chào hỏi & Tìm kiếm)
-            Header()
+            Header(
+                onSearchClick = {keyword->
+                    if(keyword.isBlank()){
+                        viewModel.loadProducts()
+                    }else{
+                        viewModel.searchProductByName(keyword)
+                    }
+                }
+            )
 
             // 2. Banner Khuyến mãi
             Box(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -52,7 +67,7 @@ fun HomeScreen() {
 
             // 6. Danh sách sản phẩm (Có nút thêm vào giỏ)
             SectionTitle("Tất cả sản phẩm")
-            ListProduct()
+            ListProduct(products)
 
             // Khoảng trống cuối trang để không bị Footer che
             Spacer(modifier = Modifier.height(24.dp))

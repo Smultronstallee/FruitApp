@@ -25,6 +25,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.fruitapp.R
 
 @Composable
@@ -35,7 +36,7 @@ fun CardProduct(
     unit: String = "1kg",
     category: String = "Trái cây",
     rating: Double = 4.9,
-    imageRes: Int = R.drawable.luu,
+    imageUrl: String?,
     isSuggested: Boolean = false,
     tag: String = "Dành cho bạn",
     reviewCount: Int = 120,
@@ -57,8 +58,8 @@ fun CardProduct(
                 .fillMaxWidth()
                 .height(130.dp)
         ) {
-            Image(
-                painter = painterResource(id = imageRes),
+            AsyncImage(
+                model = imageUrl,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

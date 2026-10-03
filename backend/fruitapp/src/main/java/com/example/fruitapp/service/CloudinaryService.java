@@ -25,8 +25,13 @@ public class CloudinaryService {
         return uploadResult.get("secure_url").toString();
     }
 
-    public void deleteFile(String publicId) throws IOException{
-        cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+    public void deleteFile(String publicId){
+        try{
+            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+
+        } catch(IOException e){
+            throw new RuntimeException("Failed to delete image from cloudinary", e);
+        }
     }
     
 }
