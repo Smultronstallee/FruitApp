@@ -8,30 +8,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.example.fruitapp.R
+import com.example.fruitapp.data.model.dto.response.ProductResponse
 import com.example.fruitapp.ui.cart.component.CardProduct
 
-// Đổi tên thành ShopProduct để tránh trùng lặp với file khác
-data class ShopProduct(
-    val name: String,
-    val price: String,
-    val unit: String,
-    val category: String,
-    val rating: Double,
-    val soldCount: Int,
-    val imageRes: Int
-)
-
 @Composable
-fun ListProduct() {
-    val productList = listOf(
-        ShopProduct("Lựu đỏ Ai Cập", "155.000đ", "1kg", "Trái cây", 4.9, 120, R.drawable.luu),
-        ShopProduct("Combo Trái cây", "250.000đ", "1 set", "Combo", 4.8, 85, R.drawable.begin_img),
-        ShopProduct("Táo Envy Mỹ", "55.000đ", "1kg", "Trái cây", 5.0, 200, R.drawable.banner),
-        ShopProduct("Dâu Tây Đà Lạt", "80.000đ", "500g", "Đà Lạt", 4.7, 50, R.drawable.luu)
-    )
+fun ListProduct(
+    products: List<ProductResponse>
+) {
+
 
     // Chia danh sách sản phẩm thành từng hàng, mỗi hàng 2 cái
-    val rows = productList.chunked(2)
+    val rows = products.chunked(2)
 
     // 1. Margin ngoài (16.dp) để thẳng hàng với Banner
     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -52,24 +39,21 @@ fun ListProduct() {
                     rowItems.forEach { product ->
                         CardProduct(
                             name = product.name,
-                            price = product.price,
+                            price = "${product.price}đ",
                             unit = product.unit,
-                            category = product.category,
+                            category = product.categoryName,
                             rating = product.rating,
                             soldCount = product.soldCount,
-                            imageRes = product.imageRes,
+                            imageUrl = product.imageUrls.firstOrNull(),
                             showAddButton = true,
-                            // 3. Quan trọng: Dùng weight(1f) để ép 2 card chia đều 50/50 màn hình
                             modifier = Modifier.weight(1f)
                         )
                     }
                     
-                    // Nếu hàng chỉ có 1 sản phẩm (số lẻ), thêm khoảng trống để card không bị giãn to
                     if (rowItems.size == 1) {
                         Spacer(modifier = Modifier.weight(1f))
                     }
                 }
-                // Khoảng cách giữa các hàng
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }

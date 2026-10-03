@@ -35,7 +35,7 @@ fun Header(
     onEditClick: () -> Unit = {},
     onCartClick: () -> Unit = {},
     onChatClick: () -> Unit = {},
-    onSearchClick: () -> Unit = {}
+    onSearchClick: (String) -> Unit = {}
 ) {
     var username by remember { mutableStateOf("Bạn") }
     var keyword by remember { mutableStateOf("") }
@@ -54,7 +54,10 @@ fun Header(
 
             BasicTextField(
                 value = keyword,
-                onValueChange = { keyword = it },
+                onValueChange = {
+                    keyword = it
+                    onSearchClick(it)
+                },
                 modifier = Modifier
                     .weight(1f)
                     .height(34.dp)
@@ -116,7 +119,7 @@ fun Header(
                         .padding(horizontal = 8.dp)
                 )
             } else {
-                IconButton(onClick = onSearchClick) {
+                IconButton(onClick = {onSearchClick(keyword)}) {
                     Icon(imageVector = Icons.Default.Search, contentDescription = "Tìm kiếm", tint = Color.White)
                 }
             }

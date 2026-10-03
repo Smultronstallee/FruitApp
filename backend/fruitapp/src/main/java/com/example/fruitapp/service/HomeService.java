@@ -34,7 +34,7 @@ public class HomeService {
     public List<ProductResponse> getFlashSale() {
         return productRepo.getFlashSaleProducts()
                 .stream()
-                .map(ProductMapper::fromEntity)
+                .map(ProductMapper::mapProductResponse)
                 .collect(Collectors.toList());
 
     }
@@ -55,7 +55,7 @@ public class HomeService {
 
         return ids.stream()
                 .map(map::get)
-                .map(ProductMapper::fromEntity)
+                .map(ProductMapper::mapProductResponse)
                 .collect(Collectors.toList());
     }
 
@@ -70,7 +70,7 @@ public class HomeService {
             return productRepo
                     .findTop10ByCategoryIdAndIsActiveTrue(topCategory)
                     .stream()
-                    .map(ProductMapper::fromEntity)
+                    .map(ProductMapper::mapProductResponse)
                     .collect(Collectors.toList());
         }
 
@@ -78,7 +78,7 @@ public class HomeService {
         return productRepo
                 .findTop10ByIsActiveTrueOrderByIdDesc()
                 .stream() 
-                .map(ProductMapper::fromEntity)
+                .map(ProductMapper::mapProductResponse)
                 .collect(Collectors.toList());
     }
 
@@ -88,7 +88,7 @@ public class HomeService {
         return productRepo
                 .findTop10ByIsActiveTrueOrderByCreatedAtDesc()
                 .stream()
-                .map(ProductMapper::fromEntity)
+                .map(ProductMapper::mapProductResponse)
                 .collect(Collectors.toList());
     }
 

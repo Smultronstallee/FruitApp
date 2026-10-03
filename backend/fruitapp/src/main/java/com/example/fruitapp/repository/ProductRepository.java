@@ -38,4 +38,6 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     List<Product> findTop10ByCategoryIdAndIsActiveTrue(Integer categoryId);
 
+    //find by name product
+    List<Product> findByNameContainingIgnoreCase(String keyword);
 }
